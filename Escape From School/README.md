@@ -17,4 +17,4 @@
 - Works with these valid [layouts](https://github.com/Zeuba-Speedruns/Layouts/tree/main/Escape%20From%20School) for a run submission on [Speedrun.com](https://www.speedrun.com/escape_from_school).
 
 ### Contact:
-- If you have any issues ask in the ["Escape From School - Speedrun" Discord server](https://discord.gg/PMTxSJWYTs)
+- If you have any issues ask in the ["Escape From School - Speedrun" Discord server](https://discord.gg/PMTxSJWYTs).
