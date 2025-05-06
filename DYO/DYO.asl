@@ -6,12 +6,14 @@ state("DYO", "Standard"){
     int sceneIndex: 0x64E608;
     int isInLevel: 0x3C7434;
     int passDoorCount: 0x0043DD44, 0x0, 0x168, 0xC, 0xCC;
+    int isEndingDoorOpen: 0x41304C;
 }
 
 state("DYO", "DYO Lab"){
     int sceneIndex: 0x617EA0;
     int isInLevel: 0x3B4430;
     int passDoorCount: 0x0040761C, 0x0, 0x168, 0xC, 0xCC;
+    int isEndingDoorOpen: 0x3DC05C;
 }
 
 startup
@@ -58,7 +60,7 @@ init
     vars.titleScreen = 0;
     vars.controllersSettings = 1;
     vars.levelsMap = 2;
-    vars.lastLevel = 30;
+    vars.lastLevel = 33;
 
     vars.notInLevel = 2;
     vars.normalFinish = 0;
@@ -99,7 +101,7 @@ split
         }
     }
 
-    if (old.isInLevel != vars.notInLevel && current.isInLevel == vars.notInLevel && current.sceneIndex == vars.titleScreen) {
+    if ((current.sceneIndex == vars.lastLevel) && (current.isEndingDoorOpen == 1) && (old.isEndingDoorOpen == 0)) {
         vars.currentSplitThreshold--;
         if (vars.currentSplitThreshold == 0) {
             vars.currentSplitThreshold = vars.splitThreshold;
