@@ -1,15 +1,17 @@
+# WARNING
+
+### **For archival purposes only, this autosplitter will only work for the November 30, 2020 version of the game (and possibly some older versions).**
+
 # We Were Here - Autosplitter
 
 ### **[LiveSplit](https://github.com/LiveSplit) autosplitter you can use for a run submission on [Speedrun.com](https://www.speedrun.com/we_were_here).**
 
 ### Supports:
 - Both explorer and librarian POV.
-- Playing from start, chess or spikes.
+- Playing from start, chess or spike (settings in autosplitter options).
 - Auto starting as player appears after opening video (skippable).
 - Auto resetting when returning to menu with a running timer.
-- Auto splitting when you enter a new puzzle room and the door closes behind you.
-  - Upon the opening of the trapdoors for the _Theater_ split.
-  - Upon game completion for the _Escape Hallway_ split.
+- Auto splitting on puzzle solving and upon game completion.
 
 ### Compatibiliy:
 - Works with these [splits files](https://github.com/Zeuba-Speedruns/Splits/tree/main/We%20Were%20Here).

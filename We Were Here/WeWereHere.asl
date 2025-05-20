@@ -1,132 +1,123 @@
 // We Were Here - Autostart, Autosplit, Autoreset
-// Made by Vocatis, Rouzard
-// Version 1.0.0
+// Made by Vocatis
+// Version 2.0.0
 
-state("We Were Here"){}
+state("We Were Here"){
+    bool isVideoPlaying: "MSAudDecMFT.dll", 0x68DE0;
+    int currentPuzzleIndex: "GameAssembly.dll", 0x4066268, 0xB8, 0xBB0, 0x20, 0x28;
+    bool isEyeEndDoorLock: "UnityPlayer.dll", 0x1F20440, 0x8, 0x118, 0x30, 0x360, 0xD0, 0x50, 0x0, 0x40, 0x20, 0x28;
+    bool isSpikeEndDoorOpen: "UnityPlayer.dll", 0x1EA0650, 0x430, 0xE28, 0x10, 0xB8, 0x58, 0x50, 0x0, 0x20, 0x20, 0x54;
+    bool isTheaterFinished: "GameAssembly.dll", 0x3D9E110, 0xB8, 0x0, 0x18, 0xCD8, 0x78, 0x50, 0x20, 0x29;
+}
 
 startup
 {
-    settings.Add("chess_start", false, "Starting at Chess (Be sure to use the according Splits file)");
-    settings.SetToolTip("chess_start", "Check if your starting at Chess");
-    settings.Add("spike_start", false, "Starting at Spike (Be sure to use the according Splits file)");
-    settings.SetToolTip("spike_start", "Check if your starting at Spike");
-
     Assembly.Load(File.ReadAllBytes("Components/asl-help")).CreateInstance("Unity");
     vars.Helper.LoadSceneManager = true;
-
-    vars.checkpoints = 0;
-
-    vars.gameStartedLog = "[GameSceneController]: Game Started";
-    vars.unlockedLog = "Achievement Unlocked: ";
-    vars.eyeSolvedExplorerLog = vars.unlockedLog + "EYES_PUZZLE_ROAM";
-    vars.eyeSolvedLibrarianLog = vars.unlockedLog + "EYES_PUZZLE_STUDY";
-    vars.hieroglyphSolvedExplorerLog = vars.unlockedLog + "PAINTING_PUZZLE_ROAM";
-    vars.hieroglyphSolvedLibrarianLog = vars.unlockedLog + "PAINTING_PUZZLE_STUDY";
-    vars.waterSolvedExplorerLog = vars.unlockedLog + "WATER_PUZZLE_ROAM";
-    vars.waterSolvedLibrarianLog = vars.unlockedLog + "WATER_PUZZLE_STUDY";
-    vars.dungeonSolvedExplorerLog = vars.unlockedLog + "DUNGEON_PUZZLE_ROAM";
-    vars.dungeonSolvedLibrarianLog = vars.unlockedLog + "DUNGEON_PUZZLE_STUDY";
-    vars.chessSolvedExplorerLog = vars.unlockedLog + "CHESS_PUZZLE_ROAM";
-    vars.chessSolvedLibrarianLog = vars.unlockedLog + "CHESS_PUZZLE_STUDY";
-    vars.spikeSolvedExplorerLog = vars.unlockedLog + "SPIKE_PUZZLE_ROAM";
-    vars.spikeSolvedLibrarianLog = vars.unlockedLog + "SPIKE_PUZZLE_STUDY";
-    vars.theaterSolvedExplorerLog = vars.unlockedLog + "THEATER_PUZZLE_ROAM";
-    vars.theaterSolvedLibrarianLog = vars.unlockedLog + "THEATER_PUZZLE_STUDY";
-
-    vars.logPath = "";
-    vars.logPath += Environment.GetEnvironmentVariable("LocalAppData");
-    vars.logPath += "\\..\\LocalLow\\Total Mayhem Games\\We Were Here\\";
-    vars.logPath += "output_log.txt";
 }
 
 init
 {
-    try {
-        FileStream fs = new FileStream(vars.logPath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-        fs.SetLength(0);
-        fs.Close();
-    } catch {
-        print("Failed to load and clear logfile!");
-    }
+    vars.solvedPuzzleCount = 0;
+    vars.maxSolvedPuzzleCount = 7;
 
-    vars.reader = new StreamReader(new FileStream(vars.logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+    // Starting Checkpoints
+    vars.startCheckpoint = 0;
+    vars.chessCheckpoint = 1;
+    vars.spikeCheckpoint = 2;
+
+    // Current Puzzle Index
+    vars.hieroglyphIndex = 0;
+    vars.chessIndex = 1;
+    vars.waterIndex = 2;
+    vars.theaterIndex = 3;
+    vars.spikeIndex = 4;
+    //vars.eyeIndex = 5;
+    vars.dungeonIndex = 6;
+
+    // Scene Index
+    vars.loadingSceneIndex = -1;
+    vars.menuSceneIndex = 3;
+    vars.gameoverSceneIndex = 4;
+    vars.gameSceneIndex = 5;
+
+    vars.Helper.TryLoad = (Func<dynamic, bool>)(mono =>
+    {
+        var wwhcheckpoint = mono["WWHCheckpointController"];
+        vars.Helper["startingCheckpoint"] = wwhcheckpoint.Make<int>("currentCheckpoint");
+
+        return true;
+    });
 }
 
 
 update
 {
-    current.Scene = vars.Helper.Scenes.Active.Name ?? old.Scene;
-
-    if(current.Scene == "lobbyscreen") {
-        vars.checkpoints = 0;
-    }
-
-    vars.logLine = vars.reader.ReadLine();
+    current.SceneIndex = vars.Helper.Scenes.Active.Index ?? old.SceneIndex;
 }
 
 reset
 {
-    if(old.Scene == "loadingscreen" && current.Scene == "mainmenu" && vars.checkpoints < 8) {
+    if ((current.SceneIndex == vars.menuSceneIndex) && (vars.solvedPuzzleCount < vars.maxSolvedPuzzleCount)) {
         return true;
     }
 }
 
 split
 {
-    if ((vars.logLine == vars.eyeSolvedExplorerLog || vars.logLine == vars.eyeSolvedLibrarianLog) && vars.checkpoints == 0) {
-        vars.checkpoints++;
+    if ((!old.isEyeEndDoorLock) && current.isEyeEndDoorLock && (current.currentPuzzleIndex == vars.hieroglyphIndex) && (vars.solvedPuzzleCount == 0) && (vars.maxSolvedPuzzleCount == 7)) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if ((vars.logLine == vars.hieroglyphSolvedExplorerLog || vars.logLine == vars.hieroglyphSolvedLibrarianLog) && vars.checkpoints == 1) {
-        vars.checkpoints++;
+    if ((old.currentPuzzleIndex == vars.hieroglyphIndex) && (current.currentPuzzleIndex == vars.waterIndex) && (vars.solvedPuzzleCount == 1)) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if ((vars.logLine == vars.waterSolvedExplorerLog || vars.logLine == vars.waterSolvedLibrarianLog) && vars.checkpoints == 2) {
-        vars.checkpoints++;
+    if ((old.currentPuzzleIndex == vars.waterIndex) && (current.currentPuzzleIndex == vars.dungeonIndex)) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if ((vars.logLine == vars.dungeonSolvedExplorerLog || vars.logLine == vars.dungeonSolvedLibrarianLog) && vars.checkpoints == 3) {
-        vars.checkpoints++;
+    if ((old.currentPuzzleIndex == vars.dungeonIndex) && (current.currentPuzzleIndex == vars.chessIndex)) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if ((vars.logLine == vars.chessSolvedExplorerLog || vars.logLine == vars.chessSolvedLibrarianLog) && vars.checkpoints == 4) {
-        vars.checkpoints++;
+    if ((old.currentPuzzleIndex == vars.chessIndex) && (current.currentPuzzleIndex == vars.spikeIndex)) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if ((vars.logLine == vars.spikeSolvedExplorerLog || vars.logLine == vars.spikeSolvedLibrarianLog) && vars.checkpoints == 5) {
-        vars.checkpoints++;
+    if (old.isSpikeEndDoorOpen && (!current.isSpikeEndDoorOpen) && (vars.solvedPuzzleCount == (vars.maxSolvedPuzzleCount - 2))) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if ((vars.logLine == vars.theaterSolvedExplorerLog || vars.logLine == vars.theaterSolvedLibrarianLog) && vars.checkpoints == 6) {
-        vars.checkpoints++;
+    if ((current.currentPuzzleIndex == vars.theaterIndex) && current.isTheaterFinished && (!old.isTheaterFinished) && (vars.solvedPuzzleCount == (vars.maxSolvedPuzzleCount - 1))) {
+        vars.solvedPuzzleCount++;
         return true;
     }
-
-    if (current.Scene == "gameoverscreen" && vars.checkpoints == 7) {
-        vars.checkpoints++;
+    if ((old.SceneIndex == vars.gameSceneIndex) && (current.SceneIndex == vars.loadingSceneIndex) && (vars.solvedPuzzleCount == vars.maxSolvedPuzzleCount)) {
         return true;
     }
 }
 
 start
 {
-    if (vars.logLine == vars.gameStartedLog) {
+    if (current.SceneIndex != vars.gameSceneIndex) return false;
+    if (current.startingCheckpoint == vars.startCheckpoint) {
+        if (old.isVideoPlaying && (!current.isVideoPlaying)) {
+            vars.maxSolvedPuzzleCount = 7;
+            return true;
+        }
+    }
+    else if ((current.startingCheckpoint == vars.chessCheckpoint) && (current.currentPuzzleIndex == vars.chessIndex)) {
+        vars.maxSolvedPuzzleCount = 3;
+        return true;
+    }
+    else if ((current.startingCheckpoint == vars.spikeCheckpoint) && (current.currentPuzzleIndex == vars.spikeIndex)) {
+        vars.maxSolvedPuzzleCount = 2;
         return true;
     }
 }
 
 onStart
 {
-    if (settings["chess_start"]) {
-        vars.checkpoints = 4;
-    }
-    if (settings["spike_start"]) {
-        vars.checkpoints = 5;
-    }
+    vars.solvedPuzzleCount = 0;
 }
